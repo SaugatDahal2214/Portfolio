@@ -9,374 +9,367 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  html, body { margin:0; padding:0; }
-  body { background: var(--bg, #f4f5f6); -webkit-font-smoothing: antialiased; }
-  * { box-sizing: border-box; }
-  a { color: var(--ink, #22262b); text-decoration: none; }
-  a:hover { color: var(--accent, #4a5f7a); }
-  ::selection { background: var(--sel, rgba(74,95,122,0.2)); }
-  @keyframes pf-pulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.3; transform:scale(.8);} }
-  @keyframes pf-flow { 0% { left:0%; opacity:0; } 8% { opacity:1; } 92% { opacity:1; } 100% { left:100%; opacity:0; } }
-  @keyframes pf-rise { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform:none; } }
-  @keyframes pf-drift { from { background-position: 0 0, 0 0; } to { background-position: 120px 120px, 60px 60px; } }
-  @keyframes pf-dash { to { stroke-dashoffset: -600; } }
-  @keyframes pf-wave { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+html, body { margin:0; padding:0; }
+body { background: var(--bg, #f4f5f6); -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+a { color: var(--ink, #22262b); text-decoration: none; }
+a:hover { color: var(--accent, #4a5f7a); }
+::selection { background: var(--sel, rgba(74,95,122,0.2)); }
+@keyframes pf-pulse { 0%,100% { opacity:1; transform:scale(1);} 50% { opacity:.3; transform:scale(.8);} }
+@keyframes pf-flow { 0% { left:0%; opacity:0; } 8% { opacity:1; } 92% { opacity:1; } 100% { left:100%; opacity:0; } }
+@keyframes pf-rise { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform:none; } }
+@keyframes pf-drift { from { background-position: 0 0, 0 0; } to { background-position: 120px 120px, 60px 60px; } }
+@keyframes pf-dash { to { stroke-dashoffset: -600; } }
+@keyframes pf-wave { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+
+/* ---- Mobile responsiveness fixes ---- */
+@media (max-width: 720px) {
+  main { padding: 0 16px 80px !important; }
+  header { padding: 10px 12px !important; }
+  header nav { flex-wrap: wrap !important; row-gap: 10px !important; padding: 12px 16px !important; border-radius: 20px !important; }
+  header nav > div:nth-child(2) { order: 3; width: 100%; justify-content: center !important; gap: 14px !important; font-size: 12.5px !important; }
+  header nav > button { order: 2; margin-left: auto; }
+
+  #hero { grid-template-columns: 1fr !important; gap: 28px !important; padding: 48px 0 40px !important; text-align: left; }
+  #hero > div:last-child { order: -1; max-width: 200px; margin: 0 auto; }
+  #hero h1 { font-size: clamp(30px, 9vw, 42px) !important; }
+
+  #stats { padding: 22px 20px !important; }
+  #stats > div { grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 22px !important; }
+
+  section { padding-top: 64px !important; }
+
+  #expertise > div:last-child,
+  #work > div:last-child { grid-template-columns: 1fr !important; }
+
+  #history > div:last-child > div { grid-template-columns: 1fr !important; gap: 6px !important; padding: 20px 4px !important; }
+
+  #contact { padding: 40px 22px !important; }
+}
 </style>
 <script>
 (function(){
-  var T = {
-    light: { bg:'oklch(0.974 0.003 250)', bg2:'oklch(0.945 0.004 250)', ink:'oklch(0.235 0.012 255)', ink2:'oklch(0.44 0.010 255)', ink3:'oklch(0.595 0.008 255)', line:'oklch(0.235 0.012 255 / 0.14)', glass:'oklch(1 0 0 / 0.6)', glass2:'oklch(1 0 0 / 0.82)', accent:'oklch(0.50 0.055 250)', sel:'oklch(0.50 0.055 250 / 0.18)', shadow:'0 18px 44px -30px oklch(0.235 0.012 255 / 0.45)' },
-    dark:  { bg:'oklch(0.155 0.006 250)', bg2:'oklch(0.205 0.007 250)', ink:'oklch(0.935 0.004 250)', ink2:'oklch(0.755 0.006 250)', ink3:'oklch(0.585 0.007 250)', line:'oklch(0.95 0.004 250 / 0.14)', glass:'oklch(0.85 0.01 250 / 0.055)', glass2:'oklch(0.85 0.01 250 / 0.10)', accent:'oklch(0.74 0.052 250)', sel:'oklch(0.74 0.052 250 / 0.24)', shadow:'0 20px 54px -32px oklch(0 0 0 / 0.75)' }
-  };
-  window.__pfApply = function(t){
-    var v = T[t] || T.light, r = document.documentElement;
-    for (var k in v) r.style.setProperty('--' + k, v[k]);
-    r.dataset.theme = t;
-    try { localStorage.setItem('pf-theme', t); } catch(e){}
-  };
-  var saved;
-  try { saved = localStorage.getItem('pf-theme'); } catch(e){}
-  if (!saved) saved = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
-  window.__pfTheme = saved;
-  window.__pfApply(saved);
-
-  var seen = new WeakSet();
-  var io = new IntersectionObserver(function(es){
-    es.forEach(function(e){
-      if (e.isIntersecting) { e.target.style.opacity = 1; e.target.style.transform = 'none'; }
-    });
-  }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
-  window.__pfScan = function(){
-    document.querySelectorAll('[data-reveal]').forEach(function(el){
-      if (seen.has(el)) return;
-      seen.add(el);
-      var d = el.getAttribute('data-reveal');
-      if (d) el.style.transitionDelay = d + 'ms';
-      var r = el.getBoundingClientRect();
-      if (r.top < innerHeight && r.bottom > 0) { el.style.opacity = 1; el.style.transform = 'none'; }
-      io.observe(el);
-    });
-  };
-  new MutationObserver(window.__pfScan).observe(document.documentElement, { childList:true, subtree:true });
-
-  // Lightweight replacement for the old style-hover attribute system.
-  function wireHoverStyles(){
-    document.querySelectorAll('[style-hover]').forEach(function(el){
-      if (el.__hoverWired) return;
-      el.__hoverWired = true;
-      var decls = el.getAttribute('style-hover').split(';').map(function(s){ return s.split(':'); }).filter(function(p){ return p.length === 2; });
-      var saved = {};
-      el.addEventListener('mouseenter', function(){
-        decls.forEach(function(p){
-          var prop = p[0].trim(), val = p.slice(1).join(':').trim();
-          saved[prop] = el.style.getPropertyValue(prop);
-          el.style.setProperty(prop, val);
-        });
-      });
-      el.addEventListener('mouseleave', function(){
-        decls.forEach(function(p){
-          var prop = p[0].trim();
-          if (saved[prop]) { el.style.setProperty(prop, saved[prop]); } else { el.style.removeProperty(prop); }
-        });
-      });
-    });
-  }
-
-  window.pfToggleTheme = function(){
-    var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    window.__pfApply(next);
-    var label = document.getElementById('pf-theme-label');
-    if (label) label.textContent = next === 'dark' ? 'Dark' : 'Light';
-  };
-
-  document.addEventListener('DOMContentLoaded', function(){
-    window.__pfScan();
-    wireHoverStyles();
-    var label = document.getElementById('pf-theme-label');
-    if (label) label.textContent = document.documentElement.dataset.theme === 'dark' ? 'Dark' : 'Light';
-  });
-  setTimeout(function(){
-    document.querySelectorAll('[data-reveal]').forEach(function(el){
-      if (getComputedStyle(el).opacity === '0') { el.style.opacity = 1; el.style.transform = 'none'; }
-    });
-  }, 3000);
+var T = {
+light: { bg:'oklch(0.974 0.003 250)', bg2:'oklch(0.945 0.004 250)', ink:'oklch(0.235 0.012 255)', ink2:'oklch(0.44 0.010 255)', ink3:'oklch(0.595 0.008 255)', line:'oklch(0.235 0.012 255 / 0.14)', glass:'oklch(1 0 0 / 0.6)', glass2:'oklch(1 0 0 / 0.82)', accent:'oklch(0.50 0.055 250)', sel:'oklch(0.50 0.055 250 / 0.18)', shadow:'0 18px 44px -30px oklch(0.235 0.012 255 / 0.45)' },
+dark: { bg:'oklch(0.155 0.006 250)', bg2:'oklch(0.205 0.007 250)', ink:'oklch(0.935 0.004 250)', ink2:'oklch(0.755 0.006 250)', ink3:'oklch(0.585 0.007 250)', line:'oklch(0.95 0.004 250 / 0.14)', glass:'oklch(0.85 0.01 250 / 0.055)', glass2:'oklch(0.85 0.01 250 / 0.10)', accent:'oklch(0.74 0.052 250)', sel:'oklch(0.74 0.052 250 / 0.24)', shadow:'0 20px 54px -32px oklch(0 0 0 / 0.75)' }
+};
+window.__pfApply = function(t){
+var v = T[t] || T.light, r = document.documentElement;
+for (var k in v) r.style.setProperty('--' + k, v[k]);
+r.dataset.theme = t;
+try { localStorage.setItem('pf-theme', t); } catch(e){}
+};
+var saved;
+try { saved = localStorage.getItem('pf-theme'); } catch(e){}
+if (!saved) saved = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+window.__pfTheme = saved;
+window.__pfApply(saved);
+var seen = new WeakSet();
+var io = new IntersectionObserver(function(es){
+es.forEach(function(e){
+if (e.isIntersecting) { e.target.style.opacity = 1; e.target.style.transform = 'none'; }
+});
+}, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+window.__pfScan = function(){
+document.querySelectorAll('[data-reveal]').forEach(function(el){
+if (seen.has(el)) return;
+seen.add(el);
+var d = el.getAttribute('data-reveal');
+if (d) el.style.transitionDelay = d + 'ms';
+var r = el.getBoundingClientRect();
+if (r.top < innerHeight && r.bottom > 0) { el.style.opacity = 1; el.style.transform = 'none'; }
+io.observe(el);
+});
+};
+new MutationObserver(window.__pfScan).observe(document.documentElement, { childList:true, subtree:true });
+// Lightweight replacement for the old style-hover attribute system.
+function wireHoverStyles(){
+document.querySelectorAll('[style-hover]').forEach(function(el){
+if (el.__hoverWired) return;
+el.__hoverWired = true;
+var decls = el.getAttribute('style-hover').split(';').map(function(s){ return s.split(':'); }).filter(function(p){ return p.length === 2; });
+var saved = {};
+el.addEventListener('mouseenter', function(){
+decls.forEach(function(p){
+var prop = p[0].trim(), val = p.slice(1).join(':').trim();
+saved[prop] = el.style.getPropertyValue(prop);
+el.style.setProperty(prop, val);
+});
+});
+el.addEventListener('mouseleave', function(){
+decls.forEach(function(p){
+var prop = p[0].trim();
+if (saved[prop]) { el.style.setProperty(prop, saved[prop]); } else { el.style.removeProperty(prop); }
+});
+});
+});
+}
+window.pfToggleTheme = function(){
+var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+window.__pfApply(next);
+var label = document.getElementById('pf-theme-label');
+if (label) label.textContent = next === 'dark' ? 'Dark' : 'Light';
+};
+document.addEventListener('DOMContentLoaded', function(){
+window.__pfScan();
+wireHoverStyles();
+var label = document.getElementById('pf-theme-label');
+if (label) label.textContent = document.documentElement.dataset.theme === 'dark' ? 'Dark' : 'Light';
+});
+setTimeout(function(){
+document.querySelectorAll('[data-reveal]').forEach(function(el){
+if (getComputedStyle(el).opacity === '0') { el.style.opacity = 1; el.style.transform = 'none'; }
+});
+}, 3000);
 })();
 </script>
 </head>
 <body>
-
 <div style="min-height:100vh; position:relative; background:var(--bg); color:var(--ink); font-family:Geist, 'Helvetica Neue', Helvetica, sans-serif; font-weight:400; overflow-x:hidden;">
-
-  <div aria-hidden="true" style="position:absolute; top:0; left:0; right:0; height:1150px; z-index:0; pointer-events:none; background-image:radial-gradient(var(--ink3) 1.15px, transparent 1.15px); background-size:34px 34px; opacity:0.42; animation:pf-drift 70s linear infinite; mask-image:linear-gradient(180deg, #000 0%, #000 42%, transparent 92%); -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 42%, transparent 92%);"></div>
-  <div aria-hidden="true" style="position:absolute; top:0; right:0; width:min(52vw, 640px); height:760px; z-index:0; pointer-events:none; opacity:0.7; background-image:repeating-radial-gradient(circle at 78% 26%, transparent 0 26px, var(--line) 26px 27px); mask-image:radial-gradient(70% 70% at 78% 26%, #000 20%, transparent 80%); -webkit-mask-image:radial-gradient(70% 70% at 78% 26%, #000 20%, transparent 80%);"></div>
-
-  <header style="position:sticky; top:0; z-index:20; padding:14px 24px; display:flex; justify-content:center;">
-    <nav style="width:100%; max-width:1080px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:10px 12px 10px 20px; border:1px solid var(--line); border-radius:999px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow);">
-      <a href="#top" style="font-family:'Instrument Serif', Georgia, serif; font-size:19px; letter-spacing:0.01em; white-space:nowrap;">Saugat Dahal</a>
-      <div style="display:flex; align-items:center; gap:24px; font-size:13.5px; color:var(--ink2); letter-spacing:0.01em;">
-        <a href="#expertise" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">Expertise</a>
-        <a href="#history" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">History</a>
-        <a href="#work" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">Projects</a>
-        <a href="#contact" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">Contact</a>
-      </div>
-      <button type="button" onclick="pfToggleTheme()" aria-label="Toggle colour theme" style="display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--glass2); color:var(--ink2); font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:color .3s ease, background .3s ease, transform .3s ease;" style-hover="color:var(--ink); transform:translateY(-1px)">
-        <span style="width:9px; height:9px; border-radius:50%; background:var(--accent); display:inline-block;"></span><span id="pf-theme-label">Light</span>
-      </button>
-    </nav>
-  </header>
-
-  <main id="top" style="position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 24px 120px;">
-
-    <section style="padding:88px 0 72px; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(240px,0.85fr); gap:56px; align-items:center;">
-      <div>
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:26px; font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink3); animation:pf-rise .8s ease both;">
-          <span style="width:7px; height:7px; border-radius:50%; background:var(--accent); animation:pf-pulse 2.6s ease-in-out infinite;"></span>
-          Open to full-time roles · Kathmandu / remote
-        </div>
-        <h1 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:clamp(40px, 5.6vw, 66px); line-height:1.05; letter-spacing:-0.02em; text-wrap:pretty; animation:pf-rise .9s ease .08s both;">
-          I build software and data systems that are <em style="font-style:italic; color:var(--accent);">reliable</em> and easy to use.
-        </h1>
-        <p style="margin:26px 0 0; max-width:540px; font-size:16.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty; animation:pf-rise .9s ease .16s both;">
-          Software developer working across full stack web development, data engineering and digital marketing. Currently a Data Analyst at Deerhold Nepal, working on healthcare data management for US healthcare clients.
-        </p>
-        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:34px; animation:pf-rise .9s ease .24s both;">
-          <a href="#work" style="padding:13px 24px; border-radius:999px; background:var(--ink); color:var(--bg); font-size:14px; transition:transform .3s ease, opacity .3s ease;" style-hover="transform:translateY(-2px); opacity:0.9; color:var(--bg)">Selected work</a>
-          <a href="#contact" style="padding:13px 24px; border-radius:999px; border:1px solid var(--line); background:var(--glass); backdrop-filter:blur(14px); color:var(--ink); font-size:14px; transition:transform .3s ease, background .3s ease;" style-hover="transform:translateY(-2px); background:var(--glass2); color:var(--ink)">Get in touch</a>
-        </div>
-      </div>
-      <div style="position:relative; animation:pf-rise 1s ease .2s both;">
-        <div aria-hidden="true" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:78%; aspect-ratio:4/5; border-radius:32px; background:var(--accent); opacity:0.16; filter:blur(46px); z-index:0;"></div>
-        <div style="position:relative; z-index:1; aspect-ratio:4/5; border-radius:28px; overflow:hidden; filter:drop-shadow(0 24px 40px oklch(0.15 0.01 255 / 0.28));">
-          <img src="Portfolio_image.png" alt="Saugat Dahal portrait" style="width:100%; height:100%; object-fit:cover; display:block;" />
-        </div>
-        <div style="position:relative; margin-top:12px; display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink3);">
-          <span>Saugat Dahal</span>
-        </div>
-      </div>
-    </section>
-
-    <section data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); padding:30px 34px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3); box-shadow:var(--shadow);">
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:28px;">
-        <div>
-          <div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">3</div>
-          <div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">roles held since 2024</div>
-        </div>
-        <div>
-          <div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">3</div>
-          <div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">core domains</div>
-        </div>
-        <div>
-          <div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">4</div>
-          <div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">featured projects</div>
-        </div>
-        <div>
-          <div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">85<span style="font-size:22px;">%</span></div>
-          <div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">price model accuracy</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="expertise" style="padding-top:110px;">
-      <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; margin-bottom:34px;">
-        <h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Expertise</h2>
-      </div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px;">
-
-        <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="box-shadow:var(--shadow); border-color:var(--accent)">
-          <h3 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:23px; letter-spacing:-0.01em;">Full Stack Web Development</h3>
-          <p style="margin:14px 0 0; font-size:14.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">I've built a diverse array of web applications from scratch using modern technologies such as React and Laravel, with strong proficiency across the SDLC and frontend + backend development.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">React</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">TypeScript</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">JavaScript</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">PHP</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Laravel</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Node.js</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MongoDB</span>
-          </div>
-        </div>
-
-        <div data-reveal="80" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="box-shadow:var(--shadow); border-color:var(--accent)">
-          <h3 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:23px; letter-spacing:-0.01em;">Data Engineering</h3>
-          <p style="margin:14px 0 0; font-size:14.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Experience across data collection, processing and management — web scraping, storage in MySQL, and analysis. Currently working as a Data Analyst on data management projects for US healthcare clients.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Apache Hadoop</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">PySpark</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Pandas</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Snowflake</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Tableau</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Selenium</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">AWS</span>
-          </div>
-        </div>
-
-        <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="box-shadow:var(--shadow); border-color:var(--accent)">
-          <h3 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:23px; letter-spacing:-0.01em;">Digital Marketing</h3>
-          <p style="margin:14px 0 0; font-size:14.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Experience in content management, SEO and data-driven marketing strategies. During my internship at Himalayan Circuit, I managed their WordPress blog, optimizing content for search engines and user engagement.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">WordPress</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Google Search Console</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Mailchimp</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Google Ads</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Meta Ads</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Meta Business Suite</span>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <section id="work" style="padding-top:110px;">
-      <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:34px;">
-        <h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Personal projects</h2>
-        <span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink3);">Selected work</span>
-      </div>
-
-      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px;">
-
-        <article data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
-          <div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
-            <span>01 / e-commerce</span>
-          </div>
-          <h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">Closal</h3>
-          <p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">A fully functional dummy eCommerce website showcasing key features such as product listing, shopping cart functionality, and responsive design.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">HTML</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">CSS</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">JavaScript</span>
-          </div>
-        </article>
-
-        <article data-reveal="80" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
-          <div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
-            <span>02 / marketplace + ML</span>
-          </div>
-          <h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">CarRevs — Price Prediction System</h3>
-          <p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Used Scikit-learn to implement a linear regression model, achieving 85% prediction accuracy for car prices. Built as a full-stack MERN application with a seamless, user-friendly interface for the car marketplace.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MERN</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Scikit-learn</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Python</span>
-          </div>
-        </article>
-
-        <article data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
-          <div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
-            <span>03 / healthcare platform</span>
-          </div>
-          <h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">Dirghayu Guru Hospital</h3>
-          <p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Designed, developed and launched a comprehensive web-based platform for Dirghayu Hospital using Laravel, improving operational efficiency across appointments and departments.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Laravel</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">PHP</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MySQL</span>
-          </div>
-        </article>
-
-        <article data-reveal="80" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
-          <div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
-            <span>04 / booking + ML</span>
-          </div>
-          <h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">Hotel Reservation System</h3>
-          <p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Integrated a machine learning model with a full-stack Laravel application, allowing real-time price predictions right within the booking platform.</p>
-          <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Laravel</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Machine Learning</span>
-            <span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MySQL</span>
-          </div>
-        </article>
-
-      </div>
-    </section>
-
-    <section id="toolkit" style="padding-top:110px;">
-      <h2 data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; margin:0 0 34px; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Toolkit</h2>
-      <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:22px; overflow:hidden;">
-        <div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Languages</div>
-          <div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Python · SQL · JavaScript · PHP</div>
-        </div>
-        <div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Frontend</div>
-          <div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">React · TypeScript · HTML5 · CSS3 · SASS</div>
-        </div>
-        <div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Backend &amp; data</div>
-          <div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Laravel · Node.js · PostgreSQL · MongoDB</div>
-        </div>
-        <div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Data engineering</div>
-          <div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Apache Hadoop · PySpark · Pandas · Snowflake</div>
-        </div>
-        <div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Analytics &amp; cloud</div>
-          <div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Tableau · Selenium · AWS · Postman</div>
-        </div>
-        <div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Marketing</div>
-          <div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">WordPress · Google Ads · Meta Ads · Mailchimp</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="history" style="padding-top:110px;">
-      <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:30px;">
-        <h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Career history</h2>
-        <span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink3);">Full CV on request</span>
-      </div>
-      <div style="display:flex; flex-direction:column;">
-
-        <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease, background .35s ease; display:grid; grid-template-columns:minmax(120px,150px) 1fr; gap:24px; padding:26px 20px; border-top:1px solid var(--line); border-radius:14px;" style-hover="background:var(--glass)">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.08em; color:var(--ink3); padding-top:4px;">Present</div>
-          <div>
-            <div style="font-size:18px;">Data Analyst · <span style="color:var(--ink3);">Deerhold Nepal</span></div>
-            <p style="margin:10px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); max-width:620px; text-wrap:pretty;">Data analysis, healthcare analytics, data engineering and database management for US healthcare data projects.</p>
-          </div>
-        </div>
-
-        <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease, background .35s ease; display:grid; grid-template-columns:minmax(120px,150px) 1fr; gap:24px; padding:26px 20px; border-top:1px solid var(--line); border-radius:14px;" style-hover="background:var(--glass)">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.08em; color:var(--ink3); padding-top:4px;">2024 — Present</div>
-          <div>
-            <div style="font-size:18px;">Full Stack Engineer · <span style="color:var(--ink3);">Code Craft Web Solutions</span></div>
-            <p style="margin:10px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); max-width:620px; text-wrap:pretty;">Frontend and backend development, user experience, team leading and project management.</p>
-          </div>
-        </div>
-
-        <div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease, background .35s ease; display:grid; grid-template-columns:minmax(120px,150px) 1fr; gap:24px; padding:26px 20px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); border-radius:14px;" style-hover="background:var(--glass)">
-          <div style="font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.08em; color:var(--ink3); padding-top:4px;">2024</div>
-          <div>
-            <div style="font-size:18px;">SEO Intern · <span style="color:var(--ink3);">Himalayan Circuit</span></div>
-            <p style="margin:10px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); max-width:620px; text-wrap:pretty;">Search engine optimization, graphic designing, content writing and ads management.</p>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <svg viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true" style="display:block; width:100%; height:70px; margin-top:96px; opacity:0.7;">
-      <path d="M0 40 C 150 6, 300 74, 450 40 S 750 6, 900 40 S 1150 74, 1200 40" fill="none" stroke="var(--line)" stroke-width="1"></path>
-      <path d="M0 52 C 150 18, 300 86, 450 52 S 750 18, 900 52 S 1150 86, 1200 52" fill="none" stroke="var(--line)" stroke-width="1"></path>
-      <path d="M0 28 C 150 -6, 300 62, 450 28 S 750 -6, 900 28 S 1150 62, 1200 28" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="10 16" style="opacity:0.6; animation:pf-dash 30s linear infinite;"></path>
-    </svg>
-
-    <section id="contact" data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; margin-top:14px; padding:56px 44px; border:1px solid var(--line); border-radius:26px; background:var(--glass); backdrop-filter:blur(22px) saturate(1.4); -webkit-backdrop-filter:blur(22px) saturate(1.4); box-shadow:var(--shadow); text-align:center;">
-      <h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:clamp(30px, 4.4vw, 46px); letter-spacing:-0.02em; line-height:1.1;">Have a project in mind?</h2>
-      <p style="margin:18px auto 0; max-width:460px; font-size:16px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">I read everything and reply within a day or two.</p>
-      <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:32px;">
-        <a href="mailto:saugat.dahal1223@gmail.com" style="padding:14px 26px; border-radius:999px; background:var(--ink); color:var(--bg); font-size:14.5px; transition:transform .3s ease, opacity .3s ease;" style-hover="transform:translateY(-2px); opacity:.9; color:var(--bg)">saugat.dahal1223@gmail.com</a>
-      </div>
-      <div style="display:flex; justify-content:center; gap:22px; margin-top:34px; font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
-        <a href="#" style="color:inherit; transition:color .3s ease;" style-hover="color:var(--ink)">GitHub</a>
-        <a href="#" style="color:inherit; transition:color .3s ease;" style-hover="color:var(--ink)">LinkedIn</a>
-      </div>
-    </section>
-
-    <footer style="margin-top:56px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
-      <span>Saugat Dahal — Software Developer</span>
-      <span>Kathmandu · NPT</span>
-    </footer>
-
-  </main>
+<div aria-hidden="true" style="position:absolute; top:0; left:0; right:0; height:1150px; z-index:0; pointer-events:none; background-image:radial-gradient(var(--ink3) 1.15px, transparent 1.15px); background-size:34px 34px; opacity:0.42; animation:pf-drift 70s linear infinite; mask-image:linear-gradient(180deg, #000 0%, #000 42%, transparent 92%); -webkit-mask-image:linear-gradient(180deg, #000 0%, #000 42%, transparent 92%);"></div>
+<div aria-hidden="true" style="position:absolute; top:0; right:0; width:min(52vw, 640px); height:760px; z-index:0; pointer-events:none; opacity:0.7; background-image:repeating-radial-gradient(circle at 78% 26%, transparent 0 26px, var(--line) 26px 27px); mask-image:radial-gradient(70% 70% at 78% 26%, #000 20%, transparent 80%); -webkit-mask-image:radial-gradient(70% 70% at 78% 26%, #000 20%, transparent 80%);"></div>
+<header style="position:sticky; top:0; z-index:20; padding:14px 24px; display:flex; justify-content:center;">
+<nav style="width:100%; max-width:1080px; display:flex; align-items:center; justify-content:space-between; gap:20px; padding:10px 12px 10px 20px; border:1px solid var(--line); border-radius:999px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.4); -webkit-backdrop-filter:blur(20px) saturate(1.4); box-shadow:var(--shadow);">
+<a href="#top" style="font-family:'Instrument Serif', Georgia, serif; font-size:19px; letter-spacing:0.01em; white-space:nowrap;">Saugat Dahal</a>
+<div style="display:flex; align-items:center; gap:24px; font-size:13.5px; color:var(--ink2); letter-spacing:0.01em;">
+<a href="#expertise" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">Expertise</a>
+<a href="#history" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">History</a>
+<a href="#work" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">Projects</a>
+<a href="#contact" style="color:inherit; transition:color .25s ease;" style-hover="color:var(--ink)">Contact</a>
+</div>
+<button type="button" onclick="pfToggleTheme()" aria-label="Toggle colour theme" style="display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--glass2); color:var(--ink2); font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; transition:color .3s ease, background .3s ease, transform .3s ease;" style-hover="color:var(--ink); transform:translateY(-1px)">
+<span style="width:9px; height:9px; border-radius:50%; background:var(--accent); display:inline-block;"></span><span id="pf-theme-label">Light</span>
+</button>
+</nav>
+</header>
+<main id="top" style="position:relative; z-index:1; max-width:1080px; margin:0 auto; padding:0 24px 120px;">
+<section id="hero" style="padding:88px 0 72px; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(240px,0.85fr); gap:56px; align-items:center;">
+<div>
+<div style="display:flex; align-items:center; gap:10px; margin-bottom:26px; font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.14em; text-transform:uppercase; color:var(--ink3); animation:pf-rise .8s ease both;">
+<span style="width:7px; height:7px; border-radius:50%; background:var(--accent); animation:pf-pulse 2.6s ease-in-out infinite;"></span>
+Open to full-time roles · Kathmandu / remote
+</div>
+<h1 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:clamp(40px, 5.6vw, 66px); line-height:1.05; letter-spacing:-0.02em; text-wrap:pretty; animation:pf-rise .9s ease .08s both;">
+I build software and data systems that are <em style="font-style:italic; color:var(--accent);">reliable</em> and easy to use.
+</h1>
+<p style="margin:26px 0 0; max-width:540px; font-size:16.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty; animation:pf-rise .9s ease .16s both;">
+Software developer working across full stack web development, data engineering and digital marketing. Currently a Data Analyst at Deerhold Nepal, working on healthcare data management for US healthcare clients.
+</p>
+<div style="display:flex; flex-wrap:wrap; gap:12px; margin-top:34px; animation:pf-rise .9s ease .24s both;">
+<a href="#work" style="padding:13px 24px; border-radius:999px; background:var(--ink); color:var(--bg); font-size:14px; transition:transform .3s ease, opacity .3s ease;" style-hover="transform:translateY(-2px); opacity:0.9; color:var(--bg)">Selected work</a>
+<a href="#contact" style="padding:13px 24px; border-radius:999px; border:1px solid var(--line); background:var(--glass); backdrop-filter:blur(14px); color:var(--ink); font-size:14px; transition:transform .3s ease, background .3s ease;" style-hover="transform:translateY(-2px); background:var(--glass2); color:var(--ink)">Get in touch</a>
+</div>
+</div>
+<div style="position:relative; animation:pf-rise 1s ease .2s both;">
+<div aria-hidden="true" style="position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); width:78%; aspect-ratio:4/5; border-radius:32px; background:var(--accent); opacity:0.16; filter:blur(46px); z-index:0;"></div>
+<div style="position:relative; z-index:1; aspect-ratio:4/5; border-radius:28px; overflow:hidden; filter:drop-shadow(0 24px 40px oklch(0.15 0.01 255 / 0.28));">
+<img src="Portfolio_image.png" alt="Saugat Dahal portrait" style="width:100%; height:100%; object-fit:cover; display:block;" />
+</div>
+<div style="position:relative; margin-top:12px; display:flex; justify-content:space-between; font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink3);">
+<span>Saugat Dahal</span>
+</div>
+</div>
+</section>
+<section id="stats" data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); padding:30px 34px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3); box-shadow:var(--shadow);">
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:28px;">
+<div>
+<div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">3</div>
+<div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">roles held since 2024</div>
+</div>
+<div>
+<div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">3</div>
+<div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">core domains</div>
+</div>
+<div>
+<div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">4</div>
+<div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">featured projects</div>
+</div>
+<div>
+<div style="font-family:'Instrument Serif', Georgia, serif; font-size:38px; line-height:1;">85<span style="font-size:22px;">%</span></div>
+<div style="margin-top:8px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">price model accuracy</div>
+</div>
+</div>
+</section>
+<section id="expertise" style="padding-top:110px;">
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; margin-bottom:34px;">
+<h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Expertise</h2>
+</div>
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:18px;">
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="box-shadow:var(--shadow); border-color:var(--accent)">
+<h3 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:23px; letter-spacing:-0.01em;">Full Stack Web Development</h3>
+<p style="margin:14px 0 0; font-size:14.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">I've built a diverse array of web applications from scratch using modern technologies such as React and Laravel, with strong proficiency across the SDLC and frontend + backend development.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">React</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">TypeScript</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">JavaScript</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">PHP</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Laravel</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Node.js</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MongoDB</span>
+</div>
+</div>
+<div data-reveal="80" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="box-shadow:var(--shadow); border-color:var(--accent)">
+<h3 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:23px; letter-spacing:-0.01em;">Data Engineering</h3>
+<p style="margin:14px 0 0; font-size:14.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Experience across data collection, processing and management — web scraping, storage in MySQL, and analysis. Currently working as a Data Analyst on data management projects for US healthcare clients.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Apache Hadoop</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">PySpark</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Pandas</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Snowflake</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Tableau</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Selenium</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">AWS</span>
+</div>
+</div>
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="box-shadow:var(--shadow); border-color:var(--accent)">
+<h3 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:23px; letter-spacing:-0.01em;">Digital Marketing</h3>
+<p style="margin:14px 0 0; font-size:14.5px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Experience in content management, SEO and data-driven marketing strategies. During my internship at Himalayan Circuit, I managed their WordPress blog, optimizing content for search engines and user engagement.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">WordPress</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Google Search Console</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Mailchimp</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Google Ads</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Meta Ads</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Meta Business Suite</span>
+</div>
+</div>
+</div>
+</section>
+<section id="work" style="padding-top:110px;">
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:34px;">
+<h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Personal projects</h2>
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink3);">Selected work</span>
+</div>
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px;">
+<article data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
+<div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
+<span>01 / e-commerce</span>
+</div>
+<h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">Closal</h3>
+<p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">A fully functional dummy eCommerce website showcasing key features such as product listing, shopping cart functionality, and responsive design.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">HTML</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">CSS</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">JavaScript</span>
+</div>
+</article>
+<article data-reveal="80" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
+<div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
+<span>02 / marketplace + ML</span>
+</div>
+<h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">CarRevs — Price Prediction System</h3>
+<p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Used Scikit-learn to implement a linear regression model, achieving 85% prediction accuracy for car prices. Built as a full-stack MERN application with a seamless, user-friendly interface for the car marketplace.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MERN</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Scikit-learn</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Python</span>
+</div>
+</article>
+<article data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
+<div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
+<span>03 / healthcare platform</span>
+</div>
+<h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">Dirghayu Guru Hospital</h3>
+<p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Designed, developed and launched a comprehensive web-based platform for Dirghayu Hospital using Laravel, improving operational efficiency across appointments and departments.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Laravel</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">PHP</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MySQL</span>
+</div>
+</article>
+<article data-reveal="80" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .45s cubic-bezier(.2,.7,.2,1), box-shadow .45s ease, border-color .45s ease; padding:30px; border:1px solid var(--line); border-radius:22px; background:var(--glass); backdrop-filter:blur(20px) saturate(1.3); -webkit-backdrop-filter:blur(20px) saturate(1.3);" style-hover="transform:translateY(-6px); box-shadow:var(--shadow); border-color:var(--accent)">
+<div style="display:flex; justify-content:space-between; align-items:center; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
+<span>04 / booking + ML</span>
+</div>
+<h3 style="margin:18px 0 0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:27px; letter-spacing:-0.01em;">Hotel Reservation System</h3>
+<p style="margin:12px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">Integrated a machine learning model with a full-stack Laravel application, allowing real-time price predictions right within the booking platform.</p>
+<div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:20px;">
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Laravel</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">Machine Learning</span>
+<span style="padding:5px 11px; border-radius:999px; border:1px solid var(--line); font-family:'JetBrains Mono', monospace; font-size:11px; color:var(--ink3);">MySQL</span>
+</div>
+</article>
+</div>
+</section>
+<section id="toolkit" style="padding-top:110px;">
+<h2 data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; margin:0 0 34px; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Toolkit</h2>
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:1px; background:var(--line); border:1px solid var(--line); border-radius:22px; overflow:hidden;">
+<div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Languages</div>
+<div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Python · SQL · JavaScript · PHP</div>
+</div>
+<div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Frontend</div>
+<div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">React · TypeScript · HTML5 · CSS3 · SASS</div>
+</div>
+<div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Backend &amp; data</div>
+<div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Laravel · Node.js · PostgreSQL · MongoDB</div>
+</div>
+<div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Data engineering</div>
+<div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Apache Hadoop · PySpark · Pandas · Snowflake</div>
+</div>
+<div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Analytics &amp; cloud</div>
+<div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">Tableau · Selenium · AWS · Postman</div>
+</div>
+<div style="padding:26px 28px; background:var(--glass); backdrop-filter:blur(18px);">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent);">Marketing</div>
+<div style="margin-top:14px; font-size:15px; line-height:1.9; color:var(--ink2);">WordPress · Google Ads · Meta Ads · Mailchimp</div>
+</div>
+</div>
+</section>
+<section id="history" style="padding-top:110px;">
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; display:flex; align-items:baseline; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:30px;">
+<h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:34px; letter-spacing:-0.01em;">Career history</h2>
+<span style="font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--ink3);">Full CV on request</span>
+</div>
+<div style="display:flex; flex-direction:column;">
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease, background .35s ease; display:grid; grid-template-columns:minmax(120px,150px) 1fr; gap:24px; padding:26px 20px; border-top:1px solid var(--line); border-radius:14px;" style-hover="background:var(--glass)">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.08em; color:var(--ink3); padding-top:4px;">Present</div>
+<div>
+<div style="font-size:18px;">Data Analyst · <span style="color:var(--ink3);">Deerhold Nepal</span></div>
+<p style="margin:10px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); max-width:620px; text-wrap:pretty;">Data analysis, healthcare analytics, data engineering and database management for US healthcare data projects.</p>
+</div>
+</div>
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease, background .35s ease; display:grid; grid-template-columns:minmax(120px,150px) 1fr; gap:24px; padding:26px 20px; border-top:1px solid var(--line); border-radius:14px;" style-hover="background:var(--glass)">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.08em; color:var(--ink3); padding-top:4px;">2024 — Present</div>
+<div>
+<div style="font-size:18px;">Full Stack Engineer · <span style="color:var(--ink3);">Code Craft Web Solutions</span></div>
+<p style="margin:10px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); max-width:620px; text-wrap:pretty;">Frontend and backend development, user experience, team leading and project management.</p>
+</div>
+</div>
+<div data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease, background .35s ease; display:grid; grid-template-columns:minmax(120px,150px) 1fr; gap:24px; padding:26px 20px; border-top:1px solid var(--line); border-bottom:1px solid var(--line); border-radius:14px;" style-hover="background:var(--glass)">
+<div style="font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.08em; color:var(--ink3); padding-top:4px;">2024</div>
+<div>
+<div style="font-size:18px;">SEO Intern · <span style="color:var(--ink3);">Himalayan Circuit</span></div>
+<p style="margin:10px 0 0; font-size:15px; line-height:1.65; color:var(--ink2); max-width:620px; text-wrap:pretty;">Search engine optimization, graphic designing, content writing and ads management.</p>
+</div>
+</div>
+</div>
+</section>
+<svg viewBox="0 0 1200 70" preserveAspectRatio="none" aria-hidden="true" style="display:block; width:100%; height:70px; margin-top:96px; opacity:0.7;">
+<path d="M0 40 C 150 6, 300 74, 450 40 S 750 6, 900 40 S 1150 74, 1200 40" fill="none" stroke="var(--line)" stroke-width="1"></path>
+<path d="M0 52 C 150 18, 300 86, 450 52 S 750 18, 900 52 S 1150 86, 1200 52" fill="none" stroke="var(--line)" stroke-width="1"></path>
+<path d="M0 28 C 150 -6, 300 62, 450 28 S 750 -6, 900 28 S 1150 62, 1200 28" fill="none" stroke="var(--accent)" stroke-width="1" stroke-dasharray="10 16" style="opacity:0.6; animation:pf-dash 30s linear infinite;"></path>
+</svg>
+<section id="contact" data-reveal="0" style="opacity:0; transform:translateY(18px); transition:opacity .8s ease, transform .8s ease; margin-top:14px; padding:56px 44px; border:1px solid var(--line); border-radius:26px; background:var(--glass); backdrop-filter:blur(22px) saturate(1.4); -webkit-backdrop-filter:blur(22px) saturate(1.4); box-shadow:var(--shadow); text-align:center;">
+<h2 style="margin:0; font-family:'Instrument Serif', Georgia, serif; font-weight:400; font-size:clamp(30px, 4.4vw, 46px); letter-spacing:-0.02em; line-height:1.1;">Have a project in mind?</h2>
+<p style="margin:18px auto 0; max-width:460px; font-size:16px; line-height:1.65; color:var(--ink2); text-wrap:pretty;">I read everything and reply within a day or two.</p>
+<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-top:32px;">
+<a href="mailto:saugat.dahal1223@gmail.com" style="padding:14px 26px; border-radius:999px; background:var(--ink); color:var(--bg); font-size:14.5px; transition:transform .3s ease, opacity .3s ease;" style-hover="transform:translateY(-2px); opacity:.9; color:var(--bg)">saugat.dahal1223@gmail.com</a>
+</div>
+<div style="display:flex; justify-content:center; gap:22px; margin-top:34px; font-family:'JetBrains Mono', monospace; font-size:11.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
+<a href="#" style="color:inherit; transition:color .3s ease;" style-hover="color:var(--ink)">GitHub</a>
+<a href="#" style="color:inherit; transition:color .3s ease;" style-hover="color:var(--ink)">LinkedIn</a>
+</div>
+</section>
+<footer style="margin-top:56px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink3);">
+<span>Saugat Dahal — Software Developer</span>
+<span>Kathmandu · NPT</span>
+</footer>
+</main>
 </div>
 </body>
 </html>
